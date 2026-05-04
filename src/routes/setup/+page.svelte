@@ -7,7 +7,8 @@
 		listExercises,
 		listThemes,
 		saveDayPlan,
-		softDeleteExercise
+		softDeleteExercise,
+		updateExercise
 	} from '$lib/db';
 	import { WEEKDAYS } from '$lib/constants';
 	import type { Exercise, Theme, Weekday } from '$lib/types';
@@ -19,6 +20,9 @@
 	let newThemeName = $state('');
 	let newExerciseName = $state('');
 	let newExerciseThemeId = $state<string>('');
+	let editingExerciseId = $state<number | null>(null);
+	let editExerciseName = $state('');
+	let editExerciseThemeId = $state<string>('');
 
 	let selectedDay = $state<Weekday>(1);
 	let selectedThemeId = $state<string>('');
@@ -86,8 +90,40 @@
 		errorMessage = '';
 		statusMessage = '';
 		await softDeleteExercise(exerciseId);
+		if (editingExerciseId === exerciseId) {
+			cancelExerciseEdit();
+		}
 		await refreshAll();
 		statusMessage = 'Exercise archived.';
+	}
+
+	function startExerciseEdit(exercise: Exercise) {
+		if (!exercise.id) return;
+		editingExerciseId = exercise.id;
+		editExerciseName = exercise.name;
+		editExerciseThemeId = exercise.themeId ? String(exercise.themeId) : '';
+		errorMessage = '';
+		statusMessage = '';
+	}
+
+	function cancelExerciseEdit() {
+		editingExerciseId = null;
+		editExerciseName = '';
+		editExerciseThemeId = '';
+	}
+
+	async function saveExerciseEdit(exerciseId: number) {
+		errorMessage = '';
+		statusMessage = '';
+
+		try {
+			await updateExercise(exerciseId, editExerciseName, editExerciseThemeId ? Number(editExerciseThemeId) : null);
+			cancelExerciseEdit();
+			await refreshAll();
+			statusMessage = 'Exercise updated.';
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Unable to update exercise.';
+		}
 	}
 
 	function toggleExercise(exerciseId: number, checked: boolean) {
@@ -186,12 +222,36 @@
 			{:else}
 				{#each exercises as exercise}
 					<div class="list-item">
-						<div>
-							<strong>{exercise.name}</strong>
-							<span class="chip" style="margin-left: 0.4rem">{getThemeName(exercise.themeId)}</span>
+						<div style="flex: 1; min-width: 12rem">
+							{#if editingExerciseId === exercise.id}
+								<div class="field-row">
+									<input bind:value={editExerciseName} placeholder="Exercise name" />
+									<select bind:value={editExerciseThemeId}>
+										<option value="">No theme</option>
+										{#each themes as theme}
+											<option value={theme.id}>{theme.name}</option>
+										{/each}
+									</select>
+								</div>
+							{:else}
+								<div>
+									<strong>{exercise.name}</strong>
+									<span class="chip" style="margin-left: 0.4rem">{getThemeName(exercise.themeId)}</span>
+								</div>
+							{/if}
 						</div>
 						{#if exercise.id}
-							<button class="danger" onclick={() => removeExercise(exercise.id!)}>Archive</button>
+							{#if editingExerciseId === exercise.id}
+								<div class="inline-row tight">
+									<button class="secondary" onclick={() => saveExerciseEdit(exercise.id!)}>Save</button>
+									<button class="ghost" onclick={cancelExerciseEdit}>Cancel</button>
+								</div>
+							{:else}
+								<div class="inline-row tight">
+									<button class="ghost" onclick={() => startExerciseEdit(exercise)}>Edit</button>
+									<button class="danger" onclick={() => removeExercise(exercise.id!)}>Archive</button>
+								</div>
+							{/if}
 						{/if}
 					</div>
 				{/each}

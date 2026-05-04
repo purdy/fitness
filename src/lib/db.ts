@@ -75,6 +75,25 @@ export async function addExercise(name: string, themeId: number | null): Promise
 	});
 }
 
+export async function updateExercise(
+	exerciseId: number,
+	name: string,
+	themeId: number | null
+): Promise<void> {
+	const clean = name.trim();
+	if (!clean) throw new Error('Exercise name is required.');
+
+	const existing = await db.exercises.get(exerciseId);
+	if (!existing || existing.deletedAt !== null) {
+		throw new Error('Exercise not found.');
+	}
+
+	await db.exercises.update(exerciseId, {
+		name: clean,
+		themeId
+	});
+}
+
 export async function softDeleteExercise(exerciseId: number): Promise<void> {
 	const exercise = await db.exercises.get(exerciseId);
 	if (!exercise) return;
