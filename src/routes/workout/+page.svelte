@@ -8,7 +8,7 @@
 		exerciseId: number;
 		exerciseName: string;
 		previousWeight: number | null;
-		weightText: string;
+		weightText: string | number | null;
 		completed: boolean;
 	}
 
@@ -73,10 +73,19 @@
 			}));
 	}
 
-	function parsedWeight(weightText: string): number | null {
-		if (!weightText.trim()) return null;
-		const value = Number(weightText);
-		if (Number.isNaN(value) || value <= 0) return null;
+	function parsedWeight(weightText: string | number | null): number | null {
+		if (weightText === null || weightText === undefined) return null;
+
+		if (typeof weightText === 'number') {
+			if (!Number.isFinite(weightText) || weightText <= 0) return null;
+			return weightText;
+		}
+
+		const clean = weightText.trim();
+		if (!clean) return null;
+
+		const value = Number(clean);
+		if (!Number.isFinite(value) || value <= 0) return null;
 		return value;
 	}
 
