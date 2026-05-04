@@ -8,7 +8,8 @@
 		listThemes,
 		saveDayPlan,
 		softDeleteExercise,
-		updateExercise
+		updateExercise,
+		updateTheme
 	} from '$lib/db';
 	import { WEEKDAYS } from '$lib/constants';
 	import type { Exercise, Theme, Weekday } from '$lib/types';
@@ -20,6 +21,8 @@
 	let newThemeName = $state('');
 	let newExerciseName = $state('');
 	let newExerciseThemeId = $state<string>('');
+	let editingThemeId = $state<number | null>(null);
+	let editThemeName = $state('');
 	let editingExerciseId = $state<number | null>(null);
 	let editExerciseName = $state('');
 	let editExerciseThemeId = $state<string>('');
@@ -65,10 +68,40 @@
 		statusMessage = '';
 		try {
 			await deleteTheme(themeId);
+			if (editingThemeId === themeId) {
+				cancelThemeEdit();
+			}
 			await refreshAll();
 			statusMessage = 'Theme deleted.';
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'Unable to delete theme.';
+		}
+	}
+
+	function startThemeEdit(theme: Theme) {
+		if (!theme.id) return;
+		editingThemeId = theme.id;
+		editThemeName = theme.name;
+		errorMessage = '';
+		statusMessage = '';
+	}
+
+	function cancelThemeEdit() {
+		editingThemeId = null;
+		editThemeName = '';
+	}
+
+	async function saveThemeEdit(themeId: number) {
+		errorMessage = '';
+		statusMessage = '';
+
+		try {
+			await updateTheme(themeId, editThemeName);
+			cancelThemeEdit();
+			await refreshAll();
+			statusMessage = 'Theme updated.';
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Unable to update theme.';
 		}
 	}
 
@@ -193,9 +226,25 @@
 			{:else}
 				{#each themes as theme}
 					<div class="list-item">
-						<span>{theme.name}</span>
+						<div style="flex: 1; min-width: 12rem">
+							{#if editingThemeId === theme.id}
+								<input bind:value={editThemeName} placeholder="Theme name" />
+							{:else}
+								<span>{theme.name}</span>
+							{/if}
+						</div>
 						{#if theme.id}
-							<button class="danger" onclick={() => removeTheme(theme.id!)}>Delete</button>
+							{#if editingThemeId === theme.id}
+								<div class="inline-row tight">
+									<button class="secondary" onclick={() => saveThemeEdit(theme.id!)}>Save</button>
+									<button class="ghost" onclick={cancelThemeEdit}>Cancel</button>
+								</div>
+							{:else}
+								<div class="inline-row tight">
+									<button class="ghost" onclick={() => startThemeEdit(theme)}>Edit</button>
+									<button class="danger" onclick={() => removeTheme(theme.id!)}>Delete</button>
+								</div>
+							{/if}
 						{/if}
 					</div>
 				{/each}

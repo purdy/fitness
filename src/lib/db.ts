@@ -49,6 +49,18 @@ export async function addTheme(name: string): Promise<number> {
 	});
 }
 
+export async function updateTheme(themeId: number, name: string): Promise<void> {
+	const clean = name.trim();
+	if (!clean) throw new Error('Theme name is required.');
+
+	const existing = await db.themes.get(themeId);
+	if (!existing) {
+		throw new Error('Theme not found.');
+	}
+
+	await db.themes.update(themeId, { name: clean });
+}
+
 export async function deleteTheme(themeId: number): Promise<void> {
 	const isUsed = await db.dayPlans.where('themeId').equals(themeId).count();
 	if (isUsed > 0) {
