@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { base } from '$app/paths';
+</script>
+
 <div class="page">
 	<section class="card">
 		<h1>Lift With A Plan</h1>
@@ -24,8 +28,8 @@
 
 	<section class="card">
 		<div class="inline-row">
-			<a href="/setup"><button>Start Setup</button></a>
-			<a href="/workout"><button class="secondary">Open Workout</button></a>
+			<a href={`${base}/setup/`}><button>Start Setup</button></a>
+			<a href={`${base}/workout/`}><button class="secondary">Open Workout</button></a>
 		</div>
 	</section>
 </div>

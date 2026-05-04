@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../app.css';
+	import { base } from '$app/paths';
 	import favicon from '$lib/assets/favicon.svg';
 
 	let { children } = $props();
@@ -19,9 +20,9 @@
 	<header class="topbar">
 		<div class="brand">Gym Flow</div>
 		<nav class="nav" aria-label="Main navigation">
-			<a href="/">Home</a>
-			<a href="/setup">Setup</a>
-			<a href="/workout">Workout</a>
+			<a href={`${base}/`}>Home</a>
+			<a href={`${base}/setup/`}>Setup</a>
+			<a href={`${base}/workout/`}>Workout</a>
 		</nav>
 	</header>
 
